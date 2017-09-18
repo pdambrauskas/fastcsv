@@ -7,13 +7,13 @@ import fastcsv
 class ReaderTest(unittest.TestCase):
 
     def it_reads_unquoted_rows(self):
-        source = ["abc,def,ghi,jkl",
-                  "mno,,pqr,stu,vw",
+        source = ["abc|def|ghi|jkl",
+                  "mno||pqr|stu|vw",
                   "xyz"]
         expected = [["abc", "def", "ghi", "jkl"],
                     ["mno", "", "pqr", "stu", "vw"],
                     ["xyz",]]
-        result = list(fastcsv.Reader(io.StringIO('\n'.join(source) + '\n')))
+        result = list(fastcsv.Reader(io.StringIO('\n'.join(source) + '\n'), splitter='|'))
         self.assertEqual(result, expected)
 
     def it_reads_quoted_rows(self):

@@ -38,6 +38,7 @@ typedef struct {
   PyObject *readbuf;
   Py_ssize_t readbuf_start;
   unsigned char entered;
+  unsigned char splitter;
   NewlineMode newline_mode;
 
   Py_ssize_t cell_cap;
@@ -97,13 +98,21 @@ ParseNewlineMode(PyObject *newline, NewlineMode *newline_mode) {
 
 static int
 Reader_init(Reader *self, PyObject *args, PyObject *kwds) {
-  static char *kwlist[] = {"fileobj", "newline",   NULL};
+  static char *kwlist[] = {"fileobj", "newline", "splitter", NULL};
   PyObject *fileobj = NULL;
   PyObject *newline = NULL;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwlist,
+  char *splitter = NULL;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|Os", kwlist,
                                    &fileobj,
-                                   &newline))
+                                   &newline,
+                                   &splitter))
     goto error;
+
+  if (splitter) {
+    self->splitter = *splitter;
+  } else {
+    self->splitter = ',';
+  }
 
   if (!ParseNewlineMode(newline, &(self->newline_mode))) goto error;
 
@@ -206,7 +215,7 @@ Seek(Reader *self, PyObject **ppret, unsigned char skip_splitter,
       reason = SEE_QUOTE;
       skip = 1;
       break;
-    } else if (!skip_splitter && buf[curr] == ',') {
+    } else if (!skip_splitter && buf[curr] == self->splitter) {
       reason = SEE_SPLITTER;
       skip = 1;
       break;
